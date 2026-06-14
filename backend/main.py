@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import conversation
+from routers import conversation, message
 
 app = FastAPI(
     title="Agent Demo API",
@@ -21,6 +21,7 @@ app.add_middleware(
 
 # Register routers
 app.include_router(conversation.router)
+app.include_router(message.router)
 
 
 @app.get("/health")
