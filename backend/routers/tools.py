@@ -12,6 +12,6 @@ discover_tools()
 
 @router.get("/")
 async def list_tools():
-    """List all available tools."""
+    """列出所有可用工具。"""
     tools = get_all_tools()
     return [tool.to_dict() for tool in tools]

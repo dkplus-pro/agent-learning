@@ -1,4 +1,4 @@
-"""Message API schemas."""
+"""消息 API 的 Pydantic Schema 定义。"""
 
 from datetime import datetime
 
@@ -6,15 +6,15 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class MessageCreate(BaseModel):
-    """Request body for creating a message."""
+    """创建消息的请求体，必须指定所属对话、角色和内容。"""
 
     conversation_id: str
-    role: str = Field(pattern="^(user|assistant)$")
-    content: str = Field(min_length=1)
+    role: str = Field(pattern="^(user|assistant)$")  # 仅允许 "user" 或 "assistant"
+    content: str = Field(min_length=1)                 # 内容不能为空
 
 
 class MessageRead(BaseModel):
-    """Response body for reading a message."""
+    """查询消息的响应体，包含消息的完整信息。"""
 
     model_config = ConfigDict(from_attributes=True)
 

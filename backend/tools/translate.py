@@ -1,4 +1,4 @@
-"""Translation tool."""
+"""翻译工具。"""
 
 from typing import Any, AsyncIterator
 
@@ -9,7 +9,7 @@ from tools.registry import register_tool
 
 @register_tool
 class TranslateTool(ToolHandler):
-    """Translation tool."""
+    """翻译工具。"""
 
     name = "translate"
     description = "翻译工具 - 支持多语言翻译"
@@ -39,7 +39,7 @@ class TranslateTool(ToolHandler):
         messages: list[dict[str, str]],
         params: dict[str, Any] | None = None,
     ) -> AsyncIterator[str]:
-        """Handle translation request."""
+        """处理翻译请求。"""
         target_lang = (params or {}).get("target_lang", "en")
 
         lang_map = {

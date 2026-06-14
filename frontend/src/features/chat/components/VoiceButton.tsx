@@ -7,6 +7,10 @@ interface Props {
   disabled?: boolean;
 }
 
+/**
+ * 语音按钮组件 — 点击开始/停止录音，利用 useVoiceInput Hook 完成录音与转写。
+ * 根据录音/转写状态动态展示图标、颜色和提示文案。
+ */
 export default function VoiceButton({ onTranscriptionComplete, disabled }: Props) {
   const { isRecording, isTranscribing, startRecording, stopRecording, error } =
     useVoiceInput(onTranscriptionComplete);

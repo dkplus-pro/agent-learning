@@ -1,4 +1,4 @@
-"""FastAPI application entry point."""
+"""FastAPI 应用入口，创建 FastAPI 实例、注册中间件和路由。"""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,10 +7,11 @@ from routers import asr, chat, conversation, message, tools
 
 app = FastAPI(
     title="Agent Demo API",
-    description="AI Agent chat application backend",
+    description="AI Agent 聊天应用后端",
     version="0.1.0",
 )
 
+# 配置 CORS 中间件，允许前端跨域访问
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -26,7 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register routers
+# 注册各个功能模块的路由
 app.include_router(conversation.router)
 app.include_router(message.router)
 app.include_router(tools.router)
@@ -36,5 +37,5 @@ app.include_router(asr.router)
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
+    """健康检查接口，用于确认服务正常运行。"""
     return {"status": "ok"}

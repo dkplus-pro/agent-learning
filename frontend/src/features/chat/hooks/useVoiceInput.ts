@@ -9,6 +9,14 @@ interface UseVoiceInputResult {
   error: string | null;
 }
 
+/**
+ * 语音输入 Hook，封装浏览器录音与后端语音识别（ASR）流程。
+ * 使用 MediaRecorder API 录制音频，停止后将 Blob 发送至后端转写为文本，
+ * 最后通过回调将识别结果返回给调用方。
+ *
+ * @param onTranscriptionComplete - 语音识别完成后的回调，接收识别出的文本
+ * @returns 录音状态、转写状态、开始/停止录音方法及错误信息
+ */
 export function useVoiceInput(
   onTranscriptionComplete: (text: string) => void
 ): UseVoiceInputResult {
@@ -21,6 +29,7 @@ export function useVoiceInput(
   const startRecording = useCallback(async () => {
     try {
       setError(null);
+      // 获取麦克风权限并创建音频流
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm;codecs=opus',
@@ -28,6 +37,7 @@ export function useVoiceInput(
 
       chunksRef.current = [];
 
+      // 收集音频数据块
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
           chunksRef.current.push(e.data);
@@ -35,12 +45,13 @@ export function useVoiceInput(
       };
 
       mediaRecorder.onstop = async () => {
+        // 停止后将数据块合并为 Blob
         const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
 
-        // Stop all tracks
+        // 释放麦克风资源
         stream.getTracks().forEach((track) => track.stop());
 
-        // Transcribe
+        // 发送 Blob 到后端进行语音识别
         setIsTranscribing(true);
         try {
           const text = await transcribeAudio(audioBlob);

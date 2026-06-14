@@ -16,7 +16,7 @@ async def create_message(
     data: MessageCreate,
     session: AsyncSession = Depends(get_session),
 ):
-    """Create a new message in a conversation."""
+    """在会话中创建新消息。"""
     # Verify conversation exists
     conversation = await session.get(Conversation, data.conversation_id)
     if not conversation:
@@ -44,7 +44,7 @@ async def list_messages(
     conversation_id: str,
     session: AsyncSession = Depends(get_session),
 ):
-    """List all messages in a conversation, ordered by created_at."""
+    """列出会话中的所有消息，按创建时间升序排列。"""
     # Verify conversation exists
     conversation = await session.get(Conversation, conversation_id)
     if not conversation:
@@ -63,7 +63,7 @@ async def delete_message(
     message_id: str,
     session: AsyncSession = Depends(get_session),
 ):
-    """Delete a single message."""
+    """删除单条消息。"""
     message = await session.get(Message, message_id)
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")

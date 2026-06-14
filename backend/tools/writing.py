@@ -1,4 +1,4 @@
-"""Writing assistant tool."""
+"""写作助手工具。"""
 
 from typing import Any, AsyncIterator
 
@@ -9,7 +9,7 @@ from tools.registry import register_tool
 
 @register_tool
 class WritingTool(ToolHandler):
-    """AI writing assistant tool."""
+    """AI 写作助手工具。"""
 
     name = "writing"
     description = "AI写作助手 - 帮助润色、改写、扩展文本"
@@ -37,7 +37,7 @@ class WritingTool(ToolHandler):
         messages: list[dict[str, str]],
         params: dict[str, Any] | None = None,
     ) -> AsyncIterator[str]:
-        """Handle writing request."""
+        """处理写作请求。"""
         style = (params or {}).get("style", "formal")
 
         style_map = {

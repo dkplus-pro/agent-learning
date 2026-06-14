@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-// In development, use the backend URL directly
+// 开发环境直接使用后端 URL
 const baseUrl = process.env.NODE_ENV === 'development'
   ? 'http://localhost:8000'
   : '';
@@ -24,6 +24,17 @@ interface SSEEvent {
   message?: string;
 }
 
+/**
+ * 使用 SSE（Server-Sent Events）流式消费后端响应的 Hook。
+ * 通过 fetch 读取流式数据，按 SSE 协议解析事件（chunk/title/done/error），
+ * 并分别回调对应的处理函数，实现打字机效果的实时消息展示。
+ *
+ * @param onChunk   - 收到文本片段时的回调
+ * @param onDone    - 流式传输完成时的回调
+ * @param onTitle   - 收到对话标题更新时的回调
+ * @param onError   - 发生错误时的回调
+ * @returns 包含 sendMessage 方法、isStreaming 状态和 error 信息
+ */
 export function useSSE(
   onChunk: (conversationId: string, messageId: string, content: string) => void,
   onDone: (conversationId: string, messageId: string) => void,
@@ -46,6 +57,7 @@ export function useSSE(
       let messageId = '';
 
       try {
+        // 向 SSE 流端点发送 POST 请求
         const response = await fetch(`${baseUrl}/api/chat/stream`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -69,12 +81,12 @@ export function useSSE(
           const { done, value } = await reader.read();
           if (done) break;
 
-          // Append new data to buffer (handle partial SSE frames)
+          // 将新数据追加到缓冲区（处理不完整的 SSE 帧）
           buffer += decoder.decode(value, { stream: true });
 
-          // Process complete SSE events (separated by \n\n)
+          // 处理完整的 SSE 事件（以 \n\n 分隔）
           const parts = buffer.split('\n\n');
-          // The last part may be incomplete — keep it in buffer
+          // 最后一部分可能不完整，保留在缓冲区中
           buffer = parts.pop() || '';
 
           for (const part of parts) {
@@ -83,6 +95,7 @@ export function useSSE(
             try {
               const event: SSEEvent = JSON.parse(part.slice(6));
 
+              // 根据事件类型分发到不同的回调
               switch (event.type) {
                 case 'chunk':
                   if (event.content) {

@@ -1,4 +1,4 @@
-"""Tool registry with auto-discovery."""
+"""工具注册表，支持自动发现。"""
 
 import importlib
 import inspect
@@ -11,28 +11,28 @@ _registry: dict[str, ToolHandler] = {}
 
 
 def register_tool(tool_class: Type[ToolHandler]) -> Type[ToolHandler]:
-    """Decorator to register a tool handler."""
+    """装饰器：注册一个工具处理器。"""
     instance = tool_class()
     _registry[instance.name] = instance
     return tool_class
 
 
 def get_tool(name: str) -> ToolHandler | None:
-    """Get a registered tool by name."""
+    """根据名称获取已注册的工具。"""
     return _registry.get(name)
 
 
 def get_all_tools() -> list[ToolHandler]:
-    """Get all registered tools."""
+    """获取所有已注册的工具。"""
     return list(_registry.values())
 
 
 def discover_tools() -> None:
     """
-    Auto-discover and register tools from the tools directory.
+    自动发现并注册 tools 目录中的工具。
 
-    Scans all Python files in the tools/ directory (excluding base.py and registry.py)
-    and imports them to trigger registration.
+    扫描 tools/ 目录下所有 Python 文件（排除 base.py 和 registry.py），
+    并导入它们以触发注册。
     """
     tools_dir = Path(__file__).parent
 

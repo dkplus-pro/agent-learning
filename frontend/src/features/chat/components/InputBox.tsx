@@ -8,6 +8,11 @@ import ToolSelector from './ToolSelector';
 import VoiceButton from './VoiceButton';
 import AttachmentPreview from './AttachmentPreview';
 
+/**
+ * 输入框组件 — 聊天消息输入区域，集成工具栏（工具选择、语音输入、附件上传）。
+ * 支持 Enter 发送 / Shift+Enter 换行；发送时先创建用户消息，再通过 SSE 流式获取 AI 回复。
+ * 使用临时 ID 追踪流式消息，完成后替换为服务端返回的真实 ID。
+ */
 export default function InputBox() {
   const [message, setMessage] = useState('');
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
@@ -15,12 +20,12 @@ export default function InputBox() {
   const { addMessage, appendToMessage, updateMessage } = useMessageStore();
   const { attachments, addAttachment, removeAttachment, clearAttachments } = useAttachment();
 
-  // Track the temp assistant message ID so chunks can append to it
+  // 用 ref 追踪临时 AI 消息 ID，以便 SSE chunk 追加内容
   const tempMessageIdRef = useRef<string | null>(null);
 
   const onChunk = useCallback(
     (conversationId: string, _messageId: string, content: string) => {
-      // Use the temp ID tracked via ref, not the empty string from useSSE
+      // 通过 ref 获取临时 ID，将 SSE 片段追加到 AI 消息中
       const targetId = tempMessageIdRef.current;
       if (targetId) {
         appendToMessage(conversationId, targetId, content);
@@ -33,7 +38,7 @@ export default function InputBox() {
     (conversationId: string, serverMessageId: string) => {
       const tempId = tempMessageIdRef.current;
       if (tempId) {
-        // Replace temp ID with the real server ID
+        // 流式传输完成：将临时 ID 替换为服务端真实 ID
         updateMessage(conversationId, tempId, {
           id: serverMessageId,
           status: 'complete',
@@ -46,6 +51,7 @@ export default function InputBox() {
 
   const onTitle = useCallback(
     (conversationId: string, title: string) => {
+      // SSE 返回对话标题时更新 store
       updateConversation(conversationId, { title });
     },
     [updateConversation]
@@ -63,6 +69,7 @@ export default function InputBox() {
   }, []);
 
   const handleSend = async () => {
+    // 空消息或无活跃对话或正在流式传输时不发送
     if (!message.trim() || !activeConversationId || isStreaming) {
       return;
     }
@@ -72,11 +79,11 @@ export default function InputBox() {
     clearAttachments();
 
     try {
-      // Add user message to UI immediately
+      // 先创建用户消息并立即展示到 UI
       const userMsg = await createMessage(activeConversationId, 'user', userMessage);
       addMessage(activeConversationId, userMsg);
 
-      // Add placeholder for assistant message with temp ID
+      // 创建临时占位 AI 消息（流式内容将逐字填充）
       const tempId = `temp-${Date.now()}`;
       tempMessageIdRef.current = tempId;
 

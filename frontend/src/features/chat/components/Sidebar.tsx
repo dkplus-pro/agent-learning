@@ -5,6 +5,10 @@ import { useConversationStore } from '@/stores';
 import { fetchConversations, createConversation } from '@/api/conversation';
 import ConversationList from './ConversationList';
 
+/**
+ * 侧边栏组件 — 展示品牌 Logo、对话列表和新建对话按钮。
+ * 页面加载时自动拉取对话列表，支持创建新对话并设为当前活跃对话。
+ */
 export default function Sidebar() {
   const [loading, setLoading] = useState(false);
   const {

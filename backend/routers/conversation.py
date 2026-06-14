@@ -18,7 +18,7 @@ async def create_conversation(
     data: ConversationCreate,
     session: AsyncSession = Depends(get_session),
 ):
-    """Create a new conversation."""
+    """创建新会话。"""
     conversation = Conversation(title=data.title)
     session.add(conversation)
     await session.commit()
@@ -30,7 +30,7 @@ async def create_conversation(
 async def list_conversations(
     session: AsyncSession = Depends(get_session),
 ):
-    """List all conversations, ordered by updated_at descending."""
+    """列出所有会话，按更新时间降序排列。"""
     result = await session.execute(
         select(Conversation).order_by(col(Conversation.updated_at).desc())
     )
@@ -42,7 +42,7 @@ async def get_conversation(
     conversation_id: str,
     session: AsyncSession = Depends(get_session),
 ):
-    """Get a single conversation by ID."""
+    """根据ID获取单个会话。"""
     conversation = await session.get(Conversation, conversation_id)
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -55,7 +55,7 @@ async def update_conversation(
     data: ConversationUpdate,
     session: AsyncSession = Depends(get_session),
 ):
-    """Update conversation title."""
+    """更新会话标题。"""
     conversation = await session.get(Conversation, conversation_id)
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -73,7 +73,7 @@ async def delete_conversation(
     conversation_id: str,
     session: AsyncSession = Depends(get_session),
 ):
-    """Delete a conversation and all its messages."""
+    """删除会话及其所有消息。"""
     conversation = await session.get(Conversation, conversation_id)
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")

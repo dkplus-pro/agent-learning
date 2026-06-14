@@ -3,6 +3,10 @@ import { IconMessage } from '@arco-design/web-react/icon';
 import { useConversationStore } from '@/stores';
 import ConversationItem from './ConversationItem';
 
+/**
+ * 对话列表组件 — 渲染当前所有对话的列表项。
+ * 无对话时显示空状态提示；有对话时点击每一项可切换活跃对话。
+ */
 export default function ConversationList() {
   const { conversations, activeConversationId, setActiveConversation } =
     useConversationStore();

@@ -1,4 +1,4 @@
-"""Tool handler base class and plugin system."""
+"""工具处理器的基类与插件系统。"""
 
 from abc import ABC, abstractmethod
 from typing import Any, AsyncIterator
@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 
 class ToolParameter(BaseModel):
-    """Tool parameter definition."""
+    """工具参数定义。"""
 
     name: str
     type: str  # "string" | "number" | "boolean" | "array"
@@ -18,7 +18,7 @@ class ToolParameter(BaseModel):
 
 
 class ToolHandler(ABC):
-    """Abstract base class for tool handlers."""
+    """工具处理器的抽象基类。"""
 
     name: str
     description: str
@@ -32,19 +32,19 @@ class ToolHandler(ABC):
         params: dict[str, Any] | None = None,
     ) -> AsyncIterator[str]:
         """
-        Handle the tool invocation and yield response chunks.
+        处理工具调用并以块的形式产出响应。
 
         Args:
-            messages: Conversation history [{"role": "user", "content": "..."}]
-            params: Tool-specific parameters (e.g., {"target_lang": "en"})
+            messages: 对话历史 [{"role": "user", "content": "..."}]
+            params: 工具特定参数（例如 {"target_lang": "en"}）
 
         Yields:
-            Response text chunks for SSE streaming
+            用于 SSE 流式传输的响应文本块
         """
         pass
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert tool metadata to dict for API response."""
+        """将工具元数据转换为字典，用于 API 响应。"""
         return {
             "id": self.name,
             "name": self.name,

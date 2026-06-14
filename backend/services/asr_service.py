@@ -1,4 +1,4 @@
-"""ASR (Automatic Speech Recognition) service using DashScope."""
+"""基于 DashScope 的 ASR（自动语音识别）服务。"""
 
 import tempfile
 from pathlib import Path
@@ -10,17 +10,17 @@ from config import settings
 
 async def transcribe_audio(audio_bytes: bytes, file_ext: str = "webm") -> str:
     """
-    Transcribe audio bytes to text using DashScope ASR API.
+    使用 DashScope ASR API 将音频字节数据转写为文本。
 
     Args:
-        audio_bytes: Raw audio data
-        file_ext: Audio file extension (webm, mp3, wav, etc.)
+        audio_bytes: 原始音频数据
+        file_ext: 音频文件扩展名（webm, mp3, wav 等）
 
     Returns:
-        Transcribed text
+        转写后的文本
 
     Raises:
-        Exception: If transcription fails
+        Exception: 转写失败时抛出
     """
     # Save audio to temporary file
     with tempfile.NamedTemporaryFile(

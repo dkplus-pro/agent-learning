@@ -8,6 +8,11 @@ import rehypeHighlight from 'rehype-highlight';
 import { useConversationStore, useMessageStore } from '@/stores';
 import { fetchMessages } from '@/api/message';
 
+/**
+ * 消息列表组件 — 使用虚拟滚动渲染对话中的所有消息。
+ * 支持 Markdown 渲染（GFM 表格 + 代码高亮），自动滚动到底部。
+ * 加载中显示 Spin，无消息时显示空状态提示。
+ */
 export default function MessageList() {
   const { activeConversationId } = useConversationStore();
   const { messages, setMessages } = useMessageStore();

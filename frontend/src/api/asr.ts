@@ -1,3 +1,4 @@
+/** 将音频 Blob 上传到后端进行语音识别，返回转写文本 */
 export async function transcribeAudio(audioBlob: Blob): Promise<string> {
   const formData = new FormData();
   formData.append('audio', audioBlob, 'recording.webm');

@@ -2,6 +2,10 @@ import { useConversationStore } from '@/stores';
 import MessageList from './MessageList';
 import InputBox from './InputBox';
 
+/**
+ * 聊天主区域组件 — 根据是否有活跃对话，渲染消息列表 + 输入框或空状态引导页。
+ * 无活跃对话时展示提示信息；有活跃对话时展示 MessageList 和 InputBox。
+ */
 export default function ChatArea() {
   const { activeConversationId } = useConversationStore();
 

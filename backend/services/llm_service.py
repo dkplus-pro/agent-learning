@@ -1,4 +1,4 @@
-"""LLM service layer for streaming chat responses."""
+"""LLM 服务层，用于流式聊天响应。"""
 
 import asyncio
 from typing import AsyncIterator
@@ -10,10 +10,10 @@ from config import settings
 
 def _sync_stream(messages, system_prompt=None):
     """
-    Synchronous generator that yields chunks from DashScope API.
+    同步生成器，从 DashScope API 逐块产出数据。
 
-    Wrapped by stream_chat() via run_in_executor so each chunk
-    yields control back to the async event loop.
+    由 stream_chat() 通过 run_in_executor 包装调用，使得每个数据块
+    都能将控制权交还给异步事件循环。
     """
     full_messages = []
     if system_prompt:
@@ -45,14 +45,14 @@ async def stream_chat(
     system_prompt: str | None = None,
 ) -> AsyncIterator[str]:
     """
-    Stream chat responses from DashScope API.
+    从 DashScope API 流式获取聊天响应。
 
-    Runs the synchronous DashScope SDK call in a thread executor,
-    yielding each token as it arrives without blocking the async event loop.
+    在线程执行器中运行同步的 DashScope SDK 调用，每个 token 到达时即产出，
+    不会阻塞异步事件循环。
 
-    StopIteration from the exhausted sync generator is caught inside
-    the thread function to avoid the Python "StopIteration cannot be
-    raised into a Future" error that would silently kill the caller.
+    同步生成器耗尽时产生的 StopIteration 会在线程函数内部捕获，以避免
+    Python 抛出 "StopIteration cannot be raised into a Future" 错误，
+    该错误会静默终止调用方。
     """
     loop = asyncio.get_running_loop()
     gen = _sync_stream(messages, system_prompt)
@@ -60,7 +60,7 @@ async def stream_chat(
     # Must NOT pass next(gen) directly to run_in_executor —
     # StopIteration from an exhausted generator crashes the Future.
     def _next_chunk():
-        """Return the next chunk from the sync stream, or None if done."""
+        """从同步流中返回下一个数据块，若已耗尽则返回 None。"""
         try:
             return next(gen)
         except StopIteration:

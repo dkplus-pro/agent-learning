@@ -10,9 +10,9 @@ router = APIRouter(prefix="/api/asr", tags=["asr"])
 @router.post("/transcribe")
 async def transcribe(audio: UploadFile = File(...)):
     """
-    Transcribe audio file to text.
+    将音频文件转录为文本。
 
-    Accepts audio files (webm, mp3, wav, etc.) and returns transcribed text.
+    接受音频文件（webm、mp3、wav 等格式），返回转录后的文本。
     """
     # Read audio bytes
     audio_bytes = await audio.read()

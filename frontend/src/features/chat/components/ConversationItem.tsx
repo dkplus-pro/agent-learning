@@ -10,6 +10,10 @@ interface Props {
   isActive?: boolean;
 }
 
+/**
+ * 对话项组件 — 展示单个对话条目的标题、日期，支持内联编辑和删除操作。
+ * 编辑模式下按 Enter 保存、按 Escape 取消；删除时弹出确认框。
+ */
 export default function ConversationItem({ conversation, isActive = false }: Props) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(conversation.title);
@@ -18,6 +22,7 @@ export default function ConversationItem({ conversation, isActive = false }: Pro
 
   const handleDelete = async () => {
     try {
+      // 调用 API 删除对话，同步移除本地状态
       await deleteConversation(conversation.id);
       removeConversation(conversation.id);
       setActiveConversation(null);
@@ -27,11 +32,13 @@ export default function ConversationItem({ conversation, isActive = false }: Pro
   };
 
   const handleEdit = () => {
+    // 进入编辑模式，初始化编辑标题为当前标题
     setEditing(true);
     setEditTitle(conversation.title);
   };
 
   const handleSave = async () => {
+    // 空标题不保存，直接退出编辑
     if (!editTitle.trim()) {
       setEditing(false);
       return;
@@ -46,11 +53,13 @@ export default function ConversationItem({ conversation, isActive = false }: Pro
   };
 
   const handleCancel = () => {
+    // 取消编辑，恢复原标题
     setEditing(false);
     setEditTitle(conversation.title);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Enter 保存，Escape 取消
     if (e.key === 'Enter') {
       handleSave();
     } else if (e.key === 'Escape') {

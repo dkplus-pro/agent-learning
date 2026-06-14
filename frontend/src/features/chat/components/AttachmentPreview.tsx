@@ -7,6 +7,11 @@ interface Props {
   onRemove: (index: number) => void;
 }
 
+/**
+ * 附件预览组件 — 以缩略图形式展示已添加的附件列表。
+ * 图片附件显示预览图，其他文件显示通用文件图标。
+ * 每个附件右上角悬停时显示删除按钮，底部显示文件名。
+ */
 export default function AttachmentPreview({ attachments, onRemove }: Props) {
   if (attachments.length === 0) {
     return null;
