@@ -50,19 +50,24 @@ async def stream_chat(
     Runs the synchronous DashScope SDK call in a thread executor,
     yielding each token as it arrives without blocking the async event loop.
 
-    Args:
-        messages: Conversation history [{"role": "user", "content": "..."}]
-        system_prompt: Optional system prompt to prepend
-
-    Yields:
-        Text chunks from the LLM response
+    StopIteration from the exhausted sync generator is caught inside
+    the thread function to avoid the Python "StopIteration cannot be
+    raised into a Future" error that would silently kill the caller.
     """
     loop = asyncio.get_running_loop()
     gen = _sync_stream(messages, system_prompt)
 
-    while True:
+    # Must NOT pass next(gen) directly to run_in_executor —
+    # StopIteration from an exhausted generator crashes the Future.
+    def _next_chunk():
+        """Return the next chunk from the sync stream, or None if done."""
         try:
-            chunk = await loop.run_in_executor(None, next, gen)
-            yield chunk
+            return next(gen)
         except StopIteration:
+            return None
+
+    while True:
+        chunk = await loop.run_in_executor(None, _next_chunk)
+        if chunk is None:
             break
+        yield chunk
