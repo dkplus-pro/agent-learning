@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from database import get_session
+from database import async_session as _async_factory, get_session
 from models import Conversation, Message, MessageStatus
 from schemas.chat import ChatRequest
 from services.llm_service import stream_chat as default_stream
@@ -45,77 +45,83 @@ async def stream_chat(
     )
     history = result.scalars().all()
 
-    # Prepare messages for LLM
     messages = [{"role": msg.role, "content": msg.content} for msg in history]
 
-    # Get tool or use default system prompt
     system_prompt = None
     if request.tool_id:
         tool = get_tool(request.tool_id)
         if tool:
             system_prompt = tool.system_prompt
 
-    # Create assistant message placeholder
-    assistant_msg = Message(
-        conversation_id=request.conversation_id,
-        role="assistant",
-        content="",
-        status=MessageStatus.COMPLETE,
-    )
-    session.add(assistant_msg)
-    await session.commit()
-    await session.refresh(assistant_msg)
-
     async def event_generator():
-        """Generate SSE events."""
         full_content = ""
+        assistant_id = None
 
         try:
+            # Create assistant message in a fresh session
+            async with _async_factory() as s:
+                assistant_msg = Message(
+                    conversation_id=request.conversation_id,
+                    role="assistant",
+                    content="",
+                    status=MessageStatus.COMPLETE,
+                )
+                s.add(assistant_msg)
+                await s.commit()
+                await s.refresh(assistant_msg)
+                assistant_id = assistant_msg.id
+
             # Stream response
             if request.tool_id:
                 tool = get_tool(request.tool_id)
                 if tool:
                     async for chunk in tool.handle(messages, request.tool_params):
-                        full_content += chunk
-                        yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+                        if chunk:
+                            full_content += chunk
+                            yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
                 else:
-                    # Fallback to default chat
                     async for chunk in default_stream(messages, system_prompt):
+                        if chunk:
+                            full_content += chunk
+                            yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+            else:
+                async for chunk in default_stream(messages, system_prompt):
+                    if chunk:
                         full_content += chunk
                         yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
-            else:
-                # Default chat without tool
-                async for chunk in default_stream(messages, system_prompt):
-                    full_content += chunk
-                    yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
 
-            # Update assistant message with full content
-            assistant_msg.content = full_content
-            assistant_msg.status = MessageStatus.COMPLETE
-            session.add(assistant_msg)
+            # Persist result in a fresh session
+            async with _async_factory() as s:
+                assistant = await s.get(Message, assistant_id)
+                if assistant:
+                    assistant.content = full_content
+                    assistant.status = MessageStatus.COMPLETE
+                    s.add(assistant)
 
-            # Update conversation timestamp
-            conversation.updated_at = datetime.utcnow()
-            session.add(conversation)
+                conv = await s.get(Conversation, request.conversation_id)
+                if conv:
+                    conv.updated_at = datetime.utcnow()
+                    if len(history) <= 1:
+                        new_title = request.message[:30] + ("..." if len(request.message) > 30 else "")
+                        conv.title = new_title
+                        yield f"data: {json.dumps({'type': 'title', 'title': new_title})}\n\n"
+                    s.add(conv)
 
-            # Auto-generate title for first message
-            if len(history) <= 1:  # Only user message
-                new_title = request.message[:30] + ("..." if len(request.message) > 30 else "")
-                conversation.title = new_title
-                session.add(conversation)
-                yield f"data: {json.dumps({'type': 'title', 'title': new_title})}\n\n"
+                await s.commit()
 
-            await session.commit()
-
-            # Send done event
-            yield f"data: {json.dumps({'type': 'done', 'message_id': assistant_msg.id})}\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'message_id': assistant_id})}\n\n"
 
         except Exception as e:
-            # Handle error
-            assistant_msg.content = full_content
-            assistant_msg.status = MessageStatus.INTERRUPTED
-            session.add(assistant_msg)
-            await session.commit()
+            try:
+                async with _async_factory() as s:
+                    assistant = await s.get(Message, assistant_id)
+                    if assistant:
+                        assistant.content = full_content
+                        assistant.status = MessageStatus.INTERRUPTED
+                        s.add(assistant)
+                        await s.commit()
+            except Exception:
+                pass
 
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
@@ -125,5 +131,6 @@ async def stream_chat(
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
         },
     )

@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
 
-from database import get_session
+import database as db_module
 from main import app
 from models import Conversation, Message  # noqa: F401
 
@@ -20,7 +20,6 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 @pytest.fixture(scope="session")
 def event_loop():
-    """Create an event loop for the test session."""
     loop = asyncio.new_event_loop()
     yield loop
     loop.close()
@@ -28,34 +27,64 @@ def event_loop():
 
 @pytest_asyncio.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Create a fresh in-memory database for each test."""
-    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-
+    """Create a fresh in-memory database for model tests."""
+    engine = create_async_engine(
+        TEST_DATABASE_URL, echo=False, connect_args={"check_same_thread": False}
+    )
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
-    session_factory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-    async with session_factory() as session:
+    factory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async with factory() as session:
         yield session
 
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
-
     await engine.dispose()
 
 
 @pytest_asyncio.fixture
-async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+async def client() -> AsyncGenerator[AsyncClient, None]:
     """Create a test client with in-memory database."""
+    import tempfile, os
+    # Use file-based temp database to avoid aiosqlite :memory: quirks
+    fd, db_path = tempfile.mkstemp(suffix='.db')
+    os.close(fd)
+    db_url = f"sqlite+aiosqlite:///{db_path}"
 
-    async def override_get_session():
-        yield db_session
+    try:
+        engine = create_async_engine(
+            db_url, echo=False, connect_args={"check_same_thread": False}
+        )
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
 
-    app.dependency_overrides[get_session] = override_get_session
+        factory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
+        async def _make_session() -> AsyncGenerator[AsyncSession, None]:
+            async with factory() as s:
+                yield s
 
-    app.dependency_overrides.clear()
+        # Save originals
+        orig_async = db_module.async_session
+        orig_get = db_module.get_session
+
+        # Replace database module functions
+        db_module.async_session = factory
+        db_module.get_session = _make_session
+
+        # Override FastAPI dependency
+        app.dependency_overrides[orig_get] = _make_session
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            yield ac
+
+        # Restore
+        db_module.async_session = orig_async
+        db_module.get_session = orig_get
+        app.dependency_overrides.clear()
+
+        await engine.dispose()
+    finally:
+        os.unlink(db_path)
