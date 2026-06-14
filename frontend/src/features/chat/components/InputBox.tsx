@@ -1,14 +1,19 @@
-import { Button, Input, Message } from '@arco-design/web-react';
-import { IconSend, IconLoading } from '@arco-design/web-react/icon';
+import { Button, Input, Message, Upload } from '@arco-design/web-react';
+import { IconSend, IconLoading, IconAttachment } from '@arco-design/web-react/icon';
 import { useState, useCallback } from 'react';
 import { useConversationStore, useMessageStore } from '@/stores';
-import { useSSE } from '@/features/chat/hooks';
+import { useSSE, useAttachment } from '@/features/chat/hooks';
 import { createMessage } from '@/api/message';
+import ToolSelector from './ToolSelector';
+import VoiceButton from './VoiceButton';
+import AttachmentPreview from './AttachmentPreview';
 
 export default function InputBox() {
   const [message, setMessage] = useState('');
+  const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const { activeConversationId, updateConversation } = useConversationStore();
   const { addMessage, appendToMessage, updateMessage } = useMessageStore();
+  const { attachments, addAttachment, removeAttachment, clearAttachments } = useAttachment();
 
   const onChunk = useCallback(
     (conversationId: string, messageId: string, content: string) => {
@@ -37,6 +42,10 @@ export default function InputBox() {
 
   const { sendMessage, isStreaming } = useSSE(onChunk, onDone, onTitle, onError);
 
+  const handleVoiceTranscription = useCallback((text: string) => {
+    setMessage((prev) => (prev ? prev + ' ' + text : text));
+  }, []);
+
   const handleSend = async () => {
     if (!message.trim() || !activeConversationId || isStreaming) {
       return;
@@ -44,6 +53,7 @@ export default function InputBox() {
 
     const userMessage = message.trim();
     setMessage('');
+    clearAttachments();
 
     try {
       // Add user message to UI immediately
@@ -61,8 +71,8 @@ export default function InputBox() {
       };
       addMessage(activeConversationId, assistantMsg);
 
-      // Start streaming
-      await sendMessage(activeConversationId, userMessage);
+      // Start streaming with optional tool
+      await sendMessage(activeConversationId, userMessage, selectedTool || undefined);
     } catch (error) {
       console.error('Failed to send message:', error);
       Message.error('发送消息失败');
@@ -78,6 +88,29 @@ export default function InputBox() {
 
   return (
     <div className="p-4">
+      <AttachmentPreview attachments={attachments} onRemove={removeAttachment} />
+      <div className="flex items-end gap-2 mb-2">
+        <ToolSelector
+          value={selectedTool}
+          onChange={setSelectedTool}
+          disabled={isStreaming}
+        />
+        <VoiceButton
+          onTranscriptionComplete={handleVoiceTranscription}
+          disabled={isStreaming}
+        />
+        <Upload
+          autoUpload={false}
+          showUploadList={false}
+          onChange={(fileList) => {
+            if (fileList.length > 0) {
+              addAttachment(fileList[fileList.length - 1].file);
+            }
+          }}
+        >
+          <Button icon={<IconAttachment />} disabled={isStreaming} />
+        </Upload>
+      </div>
       <div className="flex gap-2">
         <Input.TextArea
           value={message}
