@@ -41,7 +41,10 @@ async def transcribe_audio(audio_bytes: bytes, file_ext: str = "webm") -> str:
         )
 
         # Wait for transcription to complete
-        transcription_response = Transcription.wait(task_response.output.task_id)
+        transcription_response = Transcription.wait(
+            task_response.output.task_id,
+            api_key=settings.aliyun_dashscope_api_key,
+        )
 
         # Extract transcribed text
         if transcription_response.status_code == 200:
