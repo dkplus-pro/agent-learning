@@ -16,8 +16,7 @@ export default function ConversationItem({ conversation, isActive = false }: Pro
   const { removeConversation, setActiveConversation, updateConversation: updateStore } =
     useConversationStore();
 
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDelete = async () => {
     try {
       await deleteConversation(conversation.id);
       removeConversation(conversation.id);
@@ -27,14 +26,12 @@ export default function ConversationItem({ conversation, isActive = false }: Pro
     }
   };
 
-  const handleEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleEdit = () => {
     setEditing(true);
     setEditTitle(conversation.title);
   };
 
-  const handleSave = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleSave = async () => {
     if (!editTitle.trim()) {
       setEditing(false);
       return;
@@ -48,17 +45,16 @@ export default function ConversationItem({ conversation, isActive = false }: Pro
     }
   };
 
-  const handleCancel = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleCancel = () => {
     setEditing(false);
     setEditTitle(conversation.title);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleSave(e as any);
+      handleSave();
     } else if (e.key === 'Escape') {
-      handleCancel(e as any);
+      handleCancel();
     }
   };
 

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-interface Attachment {
+export interface Attachment {
   file: File;
   preview?: string;
 }

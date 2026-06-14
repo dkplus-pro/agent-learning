@@ -99,4 +99,59 @@ export type paths = {
       };
     };
   };
+  '/api/messages/': {
+    post: {
+      requestBody: {
+        content: {
+          'application/json': {
+            conversation_id: string;
+            role: 'user' | 'assistant';
+            content: string;
+          };
+        };
+      };
+      responses: {
+        200: {
+          content: {
+            'application/json': Message;
+          };
+        };
+      };
+    };
+  };
+  '/api/messages/{conversation_id}': {
+    get: {
+      parameters: {
+        path: { conversation_id: string };
+      };
+      responses: {
+        200: {
+          content: {
+            'application/json': Message[];
+          };
+        };
+      };
+    };
+  };
+  '/api/messages/{message_id}': {
+    delete: {
+      parameters: {
+        path: { message_id: string };
+      };
+      responses: {
+        204: never;
+      };
+    };
+  };
+  '/api/tools/': {
+    get: {
+      responses: {
+        200: {
+          content: {
+            'application/json': Tool[];
+          };
+        };
+      };
+    };
+  };
 };

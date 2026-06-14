@@ -10,7 +10,6 @@ const { Sider } = Layout;
 export default function Sidebar() {
   const [loading, setLoading] = useState(false);
   const {
-    conversations,
     setConversations,
     addConversation,
     setActiveConversation,

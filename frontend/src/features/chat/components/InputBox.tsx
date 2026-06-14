@@ -112,7 +112,10 @@ export default function InputBox() {
           showUploadList={false}
           onChange={(fileList) => {
             if (fileList.length > 0) {
-              addAttachment(fileList[fileList.length - 1].file);
+              const lastFile = fileList[fileList.length - 1];
+              if (lastFile.originFile) {
+                addAttachment(lastFile.originFile);
+              }
             }
           }}
         >

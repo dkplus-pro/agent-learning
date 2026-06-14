@@ -68,7 +68,7 @@ export default function MessageList() {
       className="h-full"
       data={conversationMessages}
       followOutput="smooth"
-      itemContent={(index, message) => (
+      itemContent={(_index, message) => (
         <div
           className={`flex animate-fadeIn ${
             message.role === 'user' ? 'justify-end' : 'justify-start'

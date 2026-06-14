@@ -1,5 +1,3 @@
-import client from './client';
-
 export async function transcribeAudio(audioBlob: Blob): Promise<string> {
   const formData = new FormData();
   formData.append('audio', audioBlob, 'recording.webm');
