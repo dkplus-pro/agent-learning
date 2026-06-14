@@ -1,5 +1,10 @@
 import { useState, useCallback } from 'react';
 
+// In development, use the backend URL directly
+const baseUrl = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:8000'
+  : '';
+
 interface UseSSEResult {
   sendMessage: (
     conversationId: string,
@@ -41,7 +46,7 @@ export function useSSE(
       let messageId = '';
 
       try {
-        const response = await fetch('/api/chat/stream', {
+        const response = await fetch(`${baseUrl}/api/chat/stream`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -58,19 +63,25 @@ export function useSSE(
 
         const reader = response.body!.getReader();
         const decoder = new TextDecoder();
+        let buffer = '';
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const text = decoder.decode(value);
-          const lines = text.split('\n\n');
+          // Append new data to buffer (handle partial SSE frames)
+          buffer += decoder.decode(value, { stream: true });
 
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
+          // Process complete SSE events (separated by \n\n)
+          const parts = buffer.split('\n\n');
+          // The last part may be incomplete — keep it in buffer
+          buffer = parts.pop() || '';
+
+          for (const part of parts) {
+            if (!part.startsWith('data: ')) continue;
 
             try {
-              const event: SSEEvent = JSON.parse(line.slice(6));
+              const event: SSEEvent = JSON.parse(part.slice(6));
 
               switch (event.type) {
                 case 'chunk':

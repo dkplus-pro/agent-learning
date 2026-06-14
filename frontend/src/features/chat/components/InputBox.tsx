@@ -1,6 +1,6 @@
 import { Button, Input, Message, Upload } from '@arco-design/web-react';
 import { IconSend, IconLoading, IconAttachment } from '@arco-design/web-react/icon';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useConversationStore, useMessageStore } from '@/stores';
 import { useSSE, useAttachment } from '@/features/chat/hooks';
 import { createMessage } from '@/api/message';
@@ -15,16 +15,31 @@ export default function InputBox() {
   const { addMessage, appendToMessage, updateMessage } = useMessageStore();
   const { attachments, addAttachment, removeAttachment, clearAttachments } = useAttachment();
 
+  // Track the temp assistant message ID so chunks can append to it
+  const tempMessageIdRef = useRef<string | null>(null);
+
   const onChunk = useCallback(
-    (conversationId: string, messageId: string, content: string) => {
-      appendToMessage(conversationId, messageId, content);
+    (conversationId: string, _messageId: string, content: string) => {
+      // Use the temp ID tracked via ref, not the empty string from useSSE
+      const targetId = tempMessageIdRef.current;
+      if (targetId) {
+        appendToMessage(conversationId, targetId, content);
+      }
     },
     [appendToMessage]
   );
 
   const onDone = useCallback(
-    (conversationId: string, messageId: string) => {
-      updateMessage(conversationId, messageId, { status: 'complete' });
+    (conversationId: string, serverMessageId: string) => {
+      const tempId = tempMessageIdRef.current;
+      if (tempId) {
+        // Replace temp ID with the real server ID
+        updateMessage(conversationId, tempId, {
+          id: serverMessageId,
+          status: 'complete',
+        });
+      }
+      tempMessageIdRef.current = null;
     },
     [updateMessage]
   );
@@ -38,6 +53,7 @@ export default function InputBox() {
 
   const onError = useCallback((error: string) => {
     Message.error(`发送失败: ${error}`);
+    tempMessageIdRef.current = null;
   }, []);
 
   const { sendMessage, isStreaming } = useSSE(onChunk, onDone, onTitle, onError);
@@ -60,9 +76,12 @@ export default function InputBox() {
       const userMsg = await createMessage(activeConversationId, 'user', userMessage);
       addMessage(activeConversationId, userMsg);
 
-      // Add placeholder for assistant message
+      // Add placeholder for assistant message with temp ID
+      const tempId = `temp-${Date.now()}`;
+      tempMessageIdRef.current = tempId;
+
       const assistantMsg = {
-        id: `temp-${Date.now()}`,
+        id: tempId,
         conversation_id: activeConversationId,
         role: 'assistant' as const,
         content: '',
@@ -76,6 +95,7 @@ export default function InputBox() {
     } catch (error) {
       console.error('Failed to send message:', error);
       Message.error('发送消息失败');
+      tempMessageIdRef.current = null;
     }
   };
 
