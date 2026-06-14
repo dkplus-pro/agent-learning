@@ -11,6 +11,7 @@ from sqlmodel import select
 from database import get_session
 from models import Conversation, Message, MessageStatus
 from schemas.chat import ChatRequest
+from services.llm_service import stream_chat as default_stream
 from tools.registry import get_tool
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
@@ -79,13 +80,11 @@ async def stream_chat(
                         yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
                 else:
                     # Fallback to default chat
-                    from services.llm_service import stream_chat as default_stream
                     async for chunk in default_stream(messages, system_prompt):
                         full_content += chunk
                         yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
             else:
                 # Default chat without tool
-                from services.llm_service import stream_chat as default_stream
                 async for chunk in default_stream(messages, system_prompt):
                     full_content += chunk
                     yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"

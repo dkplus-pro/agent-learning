@@ -5,6 +5,12 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 
+async def _mock_stream_generator(chunks: list[str]):
+    """Helper: creates a mock async generator for stream_chat."""
+    for chunk in chunks:
+        yield chunk
+
+
 @pytest.mark.asyncio
 async def test_stream_chat_basic(client):
     """Test basic chat streaming without tool."""
@@ -12,17 +18,11 @@ async def test_stream_chat_basic(client):
     conv_response = await client.post("/api/conversations/", json={"title": "测试"})
     conv_id = conv_response.json()["id"]
 
-    # Mock DashScope API
-    mock_response = AsyncMock()
-    mock_response.status_code = 200
-    mock_response.output = AsyncMock()
-    mock_response.output.choices = [
-        AsyncMock(message=AsyncMock(content="Hello!"))
-    ]
+    # Mock the async stream_chat function (not the sync Generation.call)
+    mock_chunks = ["Hello", "!"]
+    mock_gen = _mock_stream_generator(mock_chunks)
 
-    with patch("services.llm_service.Generation") as mock_gen:
-        mock_gen.call.return_value = [mock_response]
-
+    with patch("routers.chat.default_stream", return_value=mock_gen):
         response = await client.post(
             "/api/chat/stream",
             json={
@@ -51,17 +51,10 @@ async def test_stream_chat_with_tool(client):
     conv_response = await client.post("/api/conversations/", json={"title": "测试"})
     conv_id = conv_response.json()["id"]
 
-    # Mock DashScope API
-    mock_response = AsyncMock()
-    mock_response.status_code = 200
-    mock_response.output = AsyncMock()
-    mock_response.output.choices = [
-        AsyncMock(message=AsyncMock(content="润色后的文本"))
-    ]
+    mock_chunks = ["润色", "后的", "文本"]
+    mock_gen = _mock_stream_generator(mock_chunks)
 
-    with patch("services.llm_service.Generation") as mock_gen:
-        mock_gen.call.return_value = [mock_response]
-
+    with patch("tools.writing.stream_chat", return_value=mock_gen):
         response = await client.post(
             "/api/chat/stream",
             json={
@@ -101,17 +94,10 @@ async def test_stream_chat_auto_title(client):
     conv_id = conv_response.json()["id"]
     assert conv_response.json()["title"] == "新对话"
 
-    # Mock DashScope API
-    mock_response = AsyncMock()
-    mock_response.status_code = 200
-    mock_response.output = AsyncMock()
-    mock_response.output.choices = [
-        AsyncMock(message=AsyncMock(content="Response"))
-    ]
+    mock_chunks = ["Response"]
+    mock_gen = _mock_stream_generator(mock_chunks)
 
-    with patch("services.llm_service.Generation") as mock_gen:
-        mock_gen.call.return_value = [mock_response]
-
+    with patch("routers.chat.default_stream", return_value=mock_gen):
         response = await client.post(
             "/api/chat/stream",
             json={
@@ -142,17 +128,10 @@ async def test_stream_chat_saves_messages(client):
     conv_response = await client.post("/api/conversations/", json={"title": "测试"})
     conv_id = conv_response.json()["id"]
 
-    # Mock DashScope API
-    mock_response = AsyncMock()
-    mock_response.status_code = 200
-    mock_response.output = AsyncMock()
-    mock_response.output.choices = [
-        AsyncMock(message=AsyncMock(content="AI回复"))
-    ]
+    mock_chunks = ["AI", "回复"]
+    mock_gen = _mock_stream_generator(mock_chunks)
 
-    with patch("services.llm_service.Generation") as mock_gen:
-        mock_gen.call.return_value = [mock_response]
-
+    with patch("routers.chat.default_stream", return_value=mock_gen):
         await client.post(
             "/api/chat/stream",
             json={
@@ -169,4 +148,4 @@ async def test_stream_chat_saves_messages(client):
         assert messages[0]["role"] == "user"
         assert messages[0]["content"] == "用户消息"
         assert messages[1]["role"] == "assistant"
-        assert "AI回复" in messages[1]["content"]
+        assert "AI" in messages[1]["content"]
