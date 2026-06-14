@@ -1,6 +1,6 @@
 """SQLModel table definitions."""
 
 from models.conversation import Conversation
-from models.message import Message
+from models.message import Message, MessageStatus
 
-__all__ = ["Conversation", "Message"]
+__all__ = ["Conversation", "Message", "MessageStatus"]
