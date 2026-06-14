@@ -48,23 +48,35 @@ async def transcribe_audio(audio_bytes: bytes, file_ext: str = "webm") -> str:
 
         # Extract transcribed text
         if transcription_response.status_code == 200:
-            results = transcription_response.output.get("results")
-            if results:
-                # Get the first result's transcription
-                first_result = results[0]
-                transcript_url = first_result.get("transcription_url")
+            output = transcription_response.output
+            if output is None:
+                return "[Transcription failed: empty output]"
 
-                if transcript_url:
-                    # Fetch transcription result
-                    import httpx
-                    async with httpx.AsyncClient() as client:
-                        resp = await client.get(transcript_url)
-                        if resp.status_code == 200:
-                            data = resp.json()
-                            # Extract text from transcription
-                            transcripts = data.get("transcripts", [])
-                            if transcripts:
-                                return transcripts[0].get("text", "")
+            results = output.get("results")
+            if not results:
+                return "[Transcription failed: no results]"
+
+            first_result = results[0]
+
+            # Report ASR-level errors (DECODE_ERROR, etc.)
+            error_code = first_result.get("code")
+            if error_code and error_code != "SUCCESS":
+                error_msg = first_result.get("message", error_code)
+                return f"[ASR Error: {error_code} - {error_msg}]"
+
+            transcript_url = first_result.get("transcription_url")
+
+            if transcript_url:
+                # Fetch transcription result
+                import httpx
+                async with httpx.AsyncClient() as client:
+                    resp = await client.get(transcript_url)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        # Extract text from transcription
+                        transcripts = data.get("transcripts", [])
+                        if transcripts:
+                            return transcripts[0].get("text", "")
 
             return "[Transcription failed: no results]"
         else:
