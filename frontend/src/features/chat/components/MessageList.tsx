@@ -1,14 +1,42 @@
+import { useEffect } from 'react';
+import { Spin } from '@arco-design/web-react';
 import { useConversationStore, useMessageStore } from '@/stores';
+import { fetchMessages } from '@/api/message';
 
 export default function MessageList() {
   const { activeConversationId } = useConversationStore();
-  const { messages } = useMessageStore();
+  const { messages, setMessages } = useMessageStore();
+
+  useEffect(() => {
+    if (activeConversationId) {
+      loadMessages();
+    }
+  }, [activeConversationId]);
+
+  const loadMessages = async () => {
+    if (!activeConversationId) return;
+
+    try {
+      const data = await fetchMessages(activeConversationId);
+      setMessages(activeConversationId, data);
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    }
+  };
 
   if (!activeConversationId) {
     return null;
   }
 
-  const conversationMessages = messages[activeConversationId] || [];
+  const conversationMessages = messages[activeConversationId];
+
+  if (conversationMessages === undefined) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Spin />
+      </div>
+    );
+  }
 
   if (conversationMessages.length === 0) {
     return (
