@@ -151,6 +151,14 @@ body {
   outline-offset: 2px;
 }
 
+/* Suppress heavy focus ring on chat textarea */
+.chat-input-no-focus:focus,
+.chat-input-no-focus:focus-within,
+.chat-input-no-focus textarea:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -54,12 +54,15 @@ export default function Sidebar() {
       >
         <div className="flex items-center gap-2">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: 'var(--gradient-primary)' }}
           >
             <IconRobot style={{ color: 'white', fontSize: 18 }} />
           </div>
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--color-foreground)' }}>
+          <h2
+            className="text-lg font-semibold whitespace-nowrap truncate"
+            style={{ color: 'var(--color-foreground)' }}
+          >
             Agent Demo
           </h2>
         </div>

@@ -167,7 +167,7 @@ export default function InputBox() {
               : '输入消息... (Enter 发送, Shift+Enter 换行)'
           }
           autoSize={{ minRows: 1, maxRows: 4 }}
-          className="flex-1"
+          className="flex-1 chat-input-no-focus"
           disabled={isStreaming}
           style={{
             background: 'transparent',
@@ -185,13 +185,17 @@ export default function InputBox() {
           disabled={!message.trim() || isStreaming}
           loading={isStreaming}
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             background: message.trim() && !isStreaming
               ? 'var(--gradient-primary)'
               : 'var(--color-muted)',
             border: 'none',
             borderRadius: 'var(--radius-md)',
-            padding: '8px 16px',
-            height: 'auto',
+            padding: '8px 12px',
+            minWidth: 40,
+            height: 40,
             transition: 'all var(--duration-base) var(--ease-default)',
           }}
           className={message.trim() && !isStreaming ? 'hover:opacity-90 shadow-md' : ''}

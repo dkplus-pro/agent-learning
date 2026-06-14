@@ -70,8 +70,8 @@ export default function MessageList() {
       followOutput="smooth"
       itemContent={(_index, message) => (
         <div
-          className={`flex animate-fadeIn ${
-            message.role === 'user' ? 'justify-end' : 'justify-start'
+          className={`flex flex-col animate-fadeIn ${
+            message.role === 'user' ? 'items-end' : 'items-start'
           } px-6 py-2`}
         >
           <div
@@ -98,16 +98,16 @@ export default function MessageList() {
             ) : (
               <div className="whitespace-pre-wrap text-[15px] leading-relaxed">{message.content}</div>
             )}
-            <div
-              className={`text-xs mt-1 ${
-                message.role === 'user' ? 'text-white/70' : 'text-[#64748B]'
-              }`}
-            >
-              {new Date(message.created_at).toLocaleTimeString('zh-CN', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </div>
+          </div>
+          <div
+            className={`text-xs mt-1 px-1 ${
+              message.role === 'user' ? 'text-[#64748B] text-right' : 'text-[#64748B]'
+            }`}
+          >
+            {new Date(message.created_at).toLocaleTimeString('zh-CN', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </div>
         </div>
       )}
