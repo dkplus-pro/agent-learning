@@ -7,9 +7,14 @@ export default defineConfig({
       '@': './src',
     },
   },
-  dev: {
-    proxy: {
-      '/api': 'http://localhost:8000',
+  tools: {
+    devServer: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
+      },
     },
   },
 });
