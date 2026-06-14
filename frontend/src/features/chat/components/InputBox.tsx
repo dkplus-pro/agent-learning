@@ -87,9 +87,17 @@ export default function InputBox() {
   };
 
   return (
-    <div className="p-4">
+    <div
+      className="p-5"
+      style={{
+        background: 'var(--color-surface)',
+        borderTop: '1px solid var(--color-border)',
+      }}
+    >
       <AttachmentPreview attachments={attachments} onRemove={removeAttachment} />
-      <div className="flex items-end gap-2 mb-2">
+
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 mb-3">
         <ToolSelector
           value={selectedTool}
           onChange={setSelectedTool}
@@ -108,10 +116,24 @@ export default function InputBox() {
             }
           }}
         >
-          <Button icon={<IconAttachment />} disabled={isStreaming} />
+          <Button
+            type="text"
+            icon={<IconAttachment style={{ fontSize: 18 }} />}
+            disabled={isStreaming}
+            style={{ color: 'var(--color-muted-foreground)' }}
+            className="hover:bg-[var(--color-muted)] transition-colors"
+          />
         </Upload>
       </div>
-      <div className="flex gap-2">
+
+      {/* Input Area */}
+      <div
+        className="flex items-end gap-3 p-3 rounded-xl transition-all"
+        style={{
+          background: 'var(--color-background)',
+          border: '1px solid var(--color-border)',
+        }}
+      >
         <Input.TextArea
           value={message}
           onChange={setMessage}
@@ -124,6 +146,14 @@ export default function InputBox() {
           autoSize={{ minRows: 1, maxRows: 4 }}
           className="flex-1"
           disabled={isStreaming}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            boxShadow: 'none',
+            padding: 0,
+            color: 'var(--color-foreground)',
+            fontSize: 'var(--text-base)',
+          }}
         />
         <Button
           type="primary"
@@ -131,7 +161,26 @@ export default function InputBox() {
           onClick={handleSend}
           disabled={!message.trim() || isStreaming}
           loading={isStreaming}
+          style={{
+            background: message.trim() && !isStreaming
+              ? 'var(--gradient-primary)'
+              : 'var(--color-muted)',
+            border: 'none',
+            borderRadius: 'var(--radius-md)',
+            padding: '8px 16px',
+            height: 'auto',
+            transition: 'all var(--duration-base) var(--ease-default)',
+          }}
+          className={message.trim() && !isStreaming ? 'hover:opacity-90 shadow-md' : ''}
         />
+      </div>
+
+      {/* Helper Text */}
+      <div
+        className="text-xs mt-2 text-center"
+        style={{ color: 'var(--color-muted-foreground)' }}
+      >
+        Enter 发送 · Shift+Enter 换行
       </div>
     </div>
   );

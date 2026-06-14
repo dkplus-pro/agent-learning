@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { Spin } from '@arco-design/web-react';
+import { Spin, Empty } from '@arco-design/web-react';
+import { IconMessage } from '@arco-design/web-react/icon';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -45,7 +46,7 @@ export default function MessageList() {
   if (conversationMessages === undefined) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Spin />
+        <Spin size={32} />
       </div>
     );
   }
@@ -53,7 +54,10 @@ export default function MessageList() {
   if (conversationMessages.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-gray-400">还没有消息，开始对话吧！</div>
+        <Empty
+          icon={<IconMessage style={{ fontSize: 48, color: 'var(--color-muted-foreground)' }} />}
+          description="还没有消息，开始对话吧！"
+        />
       </div>
     );
   }
@@ -66,19 +70,24 @@ export default function MessageList() {
       followOutput="smooth"
       itemContent={(index, message) => (
         <div
-          className={`flex ${
+          className={`flex animate-fadeIn ${
             message.role === 'user' ? 'justify-end' : 'justify-start'
-          } px-4 py-2`}
+          } px-6 py-2`}
         >
           <div
-            className={`max-w-[70%] rounded-lg px-4 py-3 ${
+            className={`max-w-[70%] rounded-xl px-5 py-3 shadow-sm transition-all ${
               message.role === 'user'
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-900'
+                ? 'bg-gradient-to-br from-[#2563EB] to-[#3B82F6] text-white rounded-br-md'
+                : 'bg-white text-[#0F172A] border border-[#E4ECFC] rounded-bl-md'
             }`}
+            style={{
+              boxShadow: message.role === 'user'
+                ? '0 2px 8px rgba(37, 99, 235, 0.2)'
+                : '0 1px 3px rgba(0, 0, 0, 0.05)',
+            }}
           >
             {message.role === 'assistant' ? (
-              <div className="prose prose-sm max-w-none">
+              <div className="prose prose-sm max-w-none prose-headings:text-[#0F172A] prose-p:text-[#0F172A] prose-a:text-[#2563EB] prose-strong:text-[#0F172A] prose-code:text-[#0F172A] prose-code:bg-[#F1F5FD] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-[#F8FAFC] prose-pre:border prose-pre:border-[#E4ECFC]">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeHighlight]}
@@ -87,8 +96,18 @@ export default function MessageList() {
                 </ReactMarkdown>
               </div>
             ) : (
-              <div className="whitespace-pre-wrap">{message.content}</div>
+              <div className="whitespace-pre-wrap text-[15px] leading-relaxed">{message.content}</div>
             )}
+            <div
+              className={`text-xs mt-1 ${
+                message.role === 'user' ? 'text-white/70' : 'text-[#64748B]'
+              }`}
+            >
+              {new Date(message.created_at).toLocaleTimeString('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </div>
           </div>
         </div>
       )}
