@@ -1,11 +1,9 @@
-import { Button, Layout } from '@arco-design/web-react';
+import { Button } from '@arco-design/web-react';
 import { IconPlus, IconRobot } from '@arco-design/web-react/icon';
 import { useState, useEffect } from 'react';
 import { useConversationStore } from '@/stores';
 import { fetchConversations, createConversation } from '@/api/conversation';
 import ConversationList from './ConversationList';
-
-const { Sider } = Layout;
 
 export default function Sidebar() {
   const [loading, setLoading] = useState(false);
@@ -42,10 +40,12 @@ export default function Sidebar() {
   };
 
   return (
-    <Sider
-      width={280}
-      className="flex flex-col bg-white"
-      style={{ borderRight: '1px solid var(--color-border)' }}
+    <div
+      className="flex flex-col bg-white flex-shrink-0"
+      style={{
+        width: 280,
+        borderRight: '1px solid var(--color-border)',
+      }}
     >
       {/* Header */}
       <div
@@ -95,6 +95,6 @@ export default function Sidebar() {
         <div className="font-medium">Agent Demo v1.0</div>
         <div className="mt-1">Powered by FastAPI + Modern.js</div>
       </div>
-    </Sider>
+    </div>
   );
 }

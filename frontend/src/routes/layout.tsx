@@ -1,14 +1,13 @@
 import '../globals.css';
-import { Layout } from '@arco-design/web-react';
-import { Outlet } from '@modern-js/runtime/router';
 import { Sidebar, ChatArea } from '@/features/chat/components';
 
 export default function RootLayout() {
   return (
-    <Layout className="h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <ChatArea />
-      <Outlet />
-    </Layout>
+      <div className="flex-1 flex flex-col min-w-0">
+        <ChatArea />
+      </div>
+    </div>
   );
 }
